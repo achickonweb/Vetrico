@@ -764,10 +764,12 @@ def like_comment(cid):
     return jsonify({'action': action, 'likes': len(c.liked_by), 'creator_liked': c.is_liked_by_creator})
 
 
-# ─────────────────────────── API ───────────────────────────
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-        print('✅ Vetrico v27 hazır — http://localhost:5000')
-    socketio.run(app, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)),
-                 debug=True, allow_unsafe_werkzeug=True)
+    
+    # Render için Port ayarı
+    port = int(os.environ.get('PORT', 5000))
+    
+    # Canlı ortamda debug=False olmalı
+    socketio.run(app, host='0.0.0.0', port=port)
