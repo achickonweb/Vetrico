@@ -1,0 +1,510 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="h-full overflow-y-auto w-full pb-24" id="adminRoot">
+<div class="max-w-7xl mx-auto px-4 py-6">
+
+  <div class="flex items-center justify-between mb-8 flex-wrap gap-3">
+    <div>
+      <h1 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-400 via-pink-400 to-purple-500">Admin Paneli</h1>
+      <p class="text-gray-500 text-sm mt-0.5">Hoş geldin, <span class="text-white font-bold">@{{ current_user.username }}</span> ·
+        {% if current_user.is_super_admin %}<span class="text-purple-400 font-bold">Süper Admin</span>{% else %}<span class="text-blue-400 font-bold">Admin</span>{% endif %}
+      </p>
+    </div>
+    <div class="flex items-center gap-2 text-xs text-gray-500"><div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>Panel Aktif</div>
+  </div>
+
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+    <div class="bg-gradient-to-br from-blue-900/30 to-blue-800/10 border border-blue-500/20 p-5 rounded-2xl"><p class="text-blue-400 text-xs font-bold uppercase tracking-widest mb-2">Kullanıcı</p><p class="text-4xl font-black">{{ stats.users }}</p><p class="text-xs text-gray-500 mt-1">{{ stats.admins }} admin</p></div>
+    <div class="bg-gradient-to-br from-purple-900/30 to-purple-800/10 border border-purple-500/20 p-5 rounded-2xl"><p class="text-purple-400 text-xs font-bold uppercase tracking-widest mb-2">Video</p><p class="text-4xl font-black">{{ stats.videos }}</p></div>
+    <div class="bg-gradient-to-br from-pink-900/30 to-pink-800/10 border border-pink-500/20 p-5 rounded-2xl"><p class="text-pink-400 text-xs font-bold uppercase tracking-widest mb-2">Beğeni</p><p class="text-4xl font-black">{{ stats.likes }}</p></div>
+    <div class="bg-gradient-to-br from-red-900/30 to-red-800/10 border border-red-500/30 p-5 rounded-2xl"><p class="text-red-400 text-xs font-bold uppercase tracking-widest mb-2">Şikayet</p><p class="text-4xl font-black text-red-400">{{ stats.reports }}</p></div>
+  </div>
+
+  {% if reports %}
+  <div class="bg-red-500/10 border border-red-500/30 rounded-2xl px-5 py-3 mb-3 flex items-center justify-between cursor-pointer hover:bg-red-500/15 transition" onclick="switchTab('reports')">
+    <div class="flex items-center gap-3"><span class="text-xl">🚨</span><span class="font-bold text-red-300 text-sm">{{ reports|length }} şikayet işlem bekliyor</span></div>
+    <span class="text-xs text-gray-500">Görüntüle →</span>
+  </div>
+  {% endif %}
+  {% if pending_verifications %}
+  <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl px-5 py-3 mb-6 flex items-center justify-between cursor-pointer hover:bg-yellow-500/15 transition" onclick="switchTab('verify')">
+    <div class="flex items-center gap-3"><span class="text-xl">⏳</span><span class="font-bold text-yellow-300 text-sm">{{ pending_verifications|length }} rozet başvurusu bekliyor</span></div>
+    <span class="text-xs text-gray-500">Görüntüle →</span>
+  </div>
+  {% endif %}
+
+  <div class="flex gap-1 bg-white/5 border border-white/8 p-1 rounded-2xl mb-6 overflow-x-auto">
+    <button onclick="switchTab('overview')"  id="tab-btn-overview"  class="tab-btn bg-white text-black px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition">📊 <span class="hidden sm:inline">Genel</span></button>
+    <button onclick="switchTab('users')"     id="tab-btn-users"     class="tab-btn text-gray-400 hover:text-white hover:bg-white/8 px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition">👥 <span class="hidden sm:inline">Kullanıcılar</span></button>
+    <button onclick="switchTab('videos')"    id="tab-btn-videos"    class="tab-btn text-gray-400 hover:text-white hover:bg-white/8 px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition">🎬 <span class="hidden sm:inline">Videolar</span></button>
+    <button onclick="switchTab('reports')"   id="tab-btn-reports"   class="tab-btn text-gray-400 hover:text-white hover:bg-white/8 px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition flex items-center gap-1.5">🚨 <span class="hidden sm:inline">Şikayetler</span>{% if reports %}<span class="w-5 h-5 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center">{{ reports|length }}</span>{% endif %}</button>
+    <button onclick="switchTab('verify')"    id="tab-btn-verify"    class="tab-btn text-gray-400 hover:text-white hover:bg-white/8 px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition flex items-center gap-1.5">🏅 <span class="hidden sm:inline">Rozetler</span>{% if pending_verifications %}<span class="w-5 h-5 bg-yellow-500 rounded-full text-black text-[10px] flex items-center justify-center">{{ pending_verifications|length }}</span>{% endif %}</button>
+    {% if current_user.is_super_admin %}
+    <button onclick="switchTab('admins')"    id="tab-btn-admins"    class="tab-btn text-gray-400 hover:text-white hover:bg-white/8 px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition">⚙️ <span class="hidden sm:inline">Adminler</span></button>
+    <button onclick="switchTab('logs')"      id="tab-btn-logs"      class="tab-btn text-gray-400 hover:text-white hover:bg-white/8 px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition">📋 <span class="hidden sm:inline">Kayıtlar</span></button>
+    {% endif %}
+  </div>
+
+  <!-- OVERVIEW -->
+  <div id="tab-overview" class="tab-pane space-y-5">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div class="bg-white/4 border border-white/8 rounded-2xl p-5">
+        <h3 class="font-black text-base mb-4">⚡ Hızlı İşlemler</h3>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="switchTab('users')"   class="bg-blue-600/20 border border-blue-500/30 hover:bg-blue-600/30 text-blue-300 p-4 rounded-xl text-sm font-bold transition text-center">👥<br>Kullanıcılar</button>
+          <button onclick="switchTab('reports')" class="bg-red-600/20 border border-red-500/30 hover:bg-red-600/30 text-red-300 p-4 rounded-xl text-sm font-bold transition text-center">🚨<br>Şikayetler</button>
+          <button onclick="switchTab('verify')"  class="bg-yellow-600/20 border border-yellow-500/30 hover:bg-yellow-600/30 text-yellow-300 p-4 rounded-xl text-sm font-bold transition text-center">🏅<br>Rozetler</button>
+          <button onclick="switchTab('videos')"  class="bg-purple-600/20 border border-purple-500/30 hover:bg-purple-600/30 text-purple-300 p-4 rounded-xl text-sm font-bold transition text-center">🎬<br>Videolar</button>
+        </div>
+      </div>
+      <div class="bg-white/4 border border-white/8 rounded-2xl p-5">
+        <h3 class="font-black text-base mb-4">🕐 Son Kayıtlar</h3>
+        <div class="space-y-2.5">
+          {% for u in recent_users %}
+          <div class="flex items-center gap-3">
+            {% if u.avatar %}<img src="{{ u.avatar }}" class="w-8 h-8 rounded-full object-cover shrink-0">{% else %}<div class="w-8 h-8 bg-gradient-to-tr from-purple-600 to-pink-600 rounded-full flex items-center justify-center font-bold text-xs shrink-0">{{ u.username[0]|upper }}</div>{% endif %}
+            <div class="flex-1 min-w-0"><p class="text-sm font-semibold truncate">@{{ u.username }}</p><p class="text-xs text-gray-500">{{ u.created_at.strftime('%d %b %Y, %H:%M') }}</p></div>
+            <a href="{{ url_for('profile', username=u.username) }}" class="text-xs text-gray-500 hover:text-white border border-white/10 px-2 py-1 rounded-lg transition">Profil</a>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="bg-white/4 border border-white/8 rounded-2xl p-5">
+      <h3 class="font-black text-base mb-4">🎬 Son Videolar</h3>
+      <div class="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-8 gap-2">
+        {% for v in videos[:16] %}
+        <div class="relative group aspect-[9/16] bg-gray-900 rounded-xl overflow-hidden border border-white/5">
+          <video src="{{ v.filename }}" class="w-full h-full object-cover opacity-75 group-hover:opacity-100 transition"></video>
+          <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition flex flex-col items-center justify-center gap-1 bg-black/60 rounded-xl">
+            <a href="/watch/{{ v.id }}" class="bg-white/20 hover:bg-blue-600 px-2 py-0.5 rounded text-[10px] font-bold transition">Gör</a>
+            {% if current_user.perm_delete_video %}
+            <a href="/admin/delete_video/{{ v.id }}" onclick="return confirm('Sil?')" class="bg-white/20 hover:bg-red-600 px-2 py-0.5 rounded text-[10px] font-bold transition">Sil</a>
+            {% endif %}
+          </div>
+          <p class="absolute bottom-0 inset-x-0 text-[9px] text-gray-300 truncate px-1.5 pb-1 bg-gradient-to-t from-black/80 to-transparent pt-3">@{{ v.user.username }}</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- USERS -->
+  <div id="tab-users" class="tab-pane hidden">
+    <div class="bg-white/4 border border-white/8 rounded-2xl p-5">
+      <div class="flex flex-col md:flex-row gap-3 mb-5">
+        <div class="relative flex-1">
+          <input type="text" id="userSearch" placeholder="Kullanıcı adı ara…" oninput="filterUsers()"
+            class="w-full bg-black border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm outline-none focus:border-blue-500 transition placeholder-gray-500">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </div>
+        <select id="userFilter" onchange="filterUsers()" class="bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none">
+          <option value="all">Tümü</option>
+          <option value="admin">Adminler</option>
+          <option value="verified">Doğrulanmış</option>
+          <option value="normal">Normal</option>
+        </select>
+        <span class="text-xs text-gray-500 flex items-center px-1"><span id="userCount">{{ users|length }}</span>&nbsp;kullanıcı</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-white/8 text-xs text-gray-400 uppercase tracking-wider">
+              <th class="text-left pb-3 pl-2">Kullanıcı</th>
+              <th class="text-left pb-3">Durum</th>
+              <th class="text-left pb-3 hidden md:table-cell">Kayıt</th>
+              <th class="text-left pb-3 hidden md:table-cell">Video</th>
+              <th class="text-left pb-3 hidden md:table-cell">Takipçi</th>
+              <th class="text-right pb-3 pr-2">İşlem</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5">
+            {% for u in users %}
+            <tr class="user-row hover:bg-white/3 transition"
+                data-username="{{ u.username|lower }}"
+                data-role="{{ 'admin' if u.is_admin else 'normal' }}"
+                data-verified="{{ 'verified' if u.is_verified else '' }}">
+              <td class="py-3 pl-2">
+                <a href="{{ url_for('profile', username=u.username) }}" class="flex items-center gap-2.5 group min-w-0">
+                  {% if u.avatar %}<img src="{{ u.avatar }}" class="w-9 h-9 rounded-full object-cover shrink-0">{% else %}<div class="w-9 h-9 bg-gradient-to-tr from-purple-600 to-pink-600 rounded-full flex items-center justify-center font-bold text-xs shrink-0">{{ u.username[0]|upper }}</div>{% endif %}
+                  <div class="min-w-0"><p class="font-bold group-hover:text-white transition truncate">@{{ u.username }}</p></div>
+                </a>
+              </td>
+              <td class="py-3">
+                <div class="flex flex-wrap gap-1">
+                  {% if u.is_super_admin %}<span class="bg-purple-600/20 text-purple-300 border border-purple-500/30 text-[10px] px-2 py-0.5 rounded-full font-bold">Kurucu</span>
+                  {% elif u.is_admin %}<span class="bg-blue-600/20 text-blue-300 border border-blue-500/30 text-[10px] px-2 py-0.5 rounded-full font-bold">Admin</span>{% endif %}
+                  {% if u.is_verified and u.badge_key and u.badge_key in BADGES %}
+                  <span class="inline-flex items-center gap-1 bg-white/5 border border-white/10 text-[10px] px-2 py-0.5 rounded-full">{{ BADGES[u.badge_key]['svg']|safe }}<span class="text-gray-300">{{ BADGES[u.badge_key]['label'] }}</span></span>
+                  {% endif %}
+                </div>
+              </td>
+              <td class="py-3 text-xs text-gray-500 hidden md:table-cell">{{ u.created_at.strftime('%d.%m.%Y') }}</td>
+              <td class="py-3 text-xs text-gray-400 hidden md:table-cell">{{ u.videos|length }}</td>
+              <td class="py-3 text-xs text-gray-400 hidden md:table-cell">{{ u.followers_list.count() }}</td>
+              <td class="py-3 pr-2">
+                <div class="flex justify-end gap-1.5">
+                  {% if current_user.perm_verify_user %}
+                  <button onclick="openBadgeModal({{ u.id }}, '{{ u.username }}')" title="Rozet" class="w-8 h-8 bg-yellow-500/15 hover:bg-yellow-500/30 border border-yellow-500/30 rounded-xl flex items-center justify-center transition text-sm">🏅</button>
+                  {% endif %}
+                  {% if current_user.is_super_admin and not u.is_super_admin %}
+                  <button onclick="openPermModal({{ u.id }}, '{{ u.username }}', {{ 'true' if u.is_admin else 'false' }}, {{ 'true' if u.perm_ban_user else 'false' }}, {{ 'true' if u.perm_delete_video else 'false' }}, {{ 'true' if u.perm_verify_user else 'false' }})" title="Yetkiler" class="w-8 h-8 bg-blue-500/15 hover:bg-blue-500/30 border border-blue-500/30 rounded-xl flex items-center justify-center transition text-sm">⚙️</button>
+                  {% endif %}
+                  {% if current_user.perm_ban_user and not u.is_admin %}
+                  <a href="/admin/delete_user/{{ u.id }}" onclick="return confirm('@{{ u.username }} banlanacak?')" title="Ban" class="w-8 h-8 bg-red-500/15 hover:bg-red-500/30 border border-red-500/30 rounded-xl flex items-center justify-center transition text-sm">🚫</a>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIDEOS -->
+  <div id="tab-videos" class="tab-pane hidden">
+    <div class="bg-white/4 border border-white/8 rounded-2xl p-5">
+      <div class="flex gap-3 mb-5 flex-wrap">
+        <input type="text" id="videoSearch" placeholder="Açıklama veya kullanıcı ara…" oninput="filterVideos()"
+          class="flex-1 bg-black border border-white/10 rounded-xl pl-4 pr-4 py-2.5 text-sm outline-none focus:border-purple-500 transition placeholder-gray-500 min-w-[200px]">
+        <select id="videoFilter" onchange="filterVideos()" class="bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none">
+          <option value="all">Tüm Kategoriler</option>
+          {% for cat in ['Eğlence','Oyun','Spor','Müzik','Teknoloji','Haber','Genel'] %}
+          <option value="{{ cat }}">{{ cat }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3" id="videoGrid">
+        {% for v in videos %}
+        <div class="video-card relative group" data-caption="{{ v.caption|lower }}" data-user="{{ v.user.username|lower }}" data-cat="{{ v.category }}">
+          <div class="aspect-[9/16] bg-gray-900 rounded-xl overflow-hidden border border-white/5">
+            <video src="{{ v.filename }}" class="w-full h-full object-cover opacity-75 group-hover:opacity-100 transition"></video>
+          </div>
+          <div class="absolute inset-0 flex flex-col justify-between p-2 opacity-0 group-hover:opacity-100 transition rounded-xl">
+            <div class="flex justify-end">{% if current_user.perm_delete_video %}<a href="/admin/delete_video/{{ v.id }}" onclick="return confirm('Sil?')" class="w-7 h-7 bg-red-600/90 hover:bg-red-600 rounded-lg flex items-center justify-center text-sm transition shadow">🗑</a>{% endif %}</div>
+            <div class="bg-black/70 rounded-xl p-2 backdrop-blur-sm">
+              <a href="{{ url_for('profile', username=v.user.username) }}" class="text-[10px] font-bold text-white block truncate hover:text-gray-300">@{{ v.user.username }}</a>
+              <p class="text-[9px] text-gray-400 truncate">{{ v.caption }}</p>
+              <div class="flex justify-between mt-1"><span class="text-[9px] text-gray-500">♥ {{ v.liked_by|length }}</span><span class="text-[9px] text-gray-500">👁 {{ v.views }}</span><a href="/watch/{{ v.id }}" class="text-[9px] text-blue-400">▶ Gör</a></div>
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <p class="col-span-full text-center text-gray-500 py-10">Video yok.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- REPORTS -->
+  <div id="tab-reports" class="tab-pane hidden">
+    {% if reports %}
+    <div class="space-y-4">
+      {% for r in reports %}
+      <div class="bg-red-900/10 border border-red-500/20 rounded-2xl p-5 flex flex-col md:flex-row gap-4">
+        <div class="relative shrink-0">
+          <video src="{{ r.video.filename }}" class="w-24 h-36 object-cover rounded-xl bg-black border border-white/10"></video>
+          <a href="/watch/{{ r.video.id }}" class="absolute inset-0 flex items-center justify-center bg-black/50 rounded-xl opacity-0 hover:opacity-100 transition"><span class="text-white text-2xl">▶</span></a>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <p class="font-black text-red-300 text-base">🚩 {{ r.reason }}</p>
+              <p class="text-sm text-gray-400 mt-1">Video sahibi: <a href="{{ url_for('profile', username=r.video.user.username) }}" class="font-bold text-white">@{{ r.video.user.username }}</a></p>
+              <p class="text-sm text-gray-400">Şikayet eden: <a href="{{ url_for('profile', username=r.reporter.username) }}" class="font-bold text-white">@{{ r.reporter.username }}</a></p>
+              <p class="text-xs text-gray-600 mt-1">{{ r.timestamp.strftime('%d %B %Y, %H:%M') }}</p>
+              {% if r.video.caption %}<p class="text-xs text-gray-500 mt-2 italic">"{{ r.video.caption[:80] }}"</p>{% endif %}
+            </div>
+            <div class="flex flex-col gap-2 shrink-0">
+              {% if current_user.perm_delete_video %}
+              <a href="/admin/delete_video/{{ r.video.id }}" onclick="return confirm('Videoyu sil?')" class="bg-red-600 hover:bg-red-500 text-white px-5 py-2.5 rounded-xl text-sm font-black transition text-center">🗑 Videoyu Sil</a>
+              {% endif %}
+              <a href="/admin/dismiss_report/{{ r.id }}" class="bg-gray-700 hover:bg-gray-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition text-center">Yoksay</a>
+              {% if current_user.perm_ban_user %}
+              <a href="/admin/delete_user/{{ r.video.user_id }}" onclick="return confirm('@{{ r.video.user.username }} banlanacak.')" class="bg-orange-700 hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition text-center">🚫 Kullanıcıyı Ban</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-20 text-gray-500"><p class="text-5xl mb-4">✅</p><p class="font-bold text-lg text-gray-400">Bekleyen şikayet yok!</p></div>
+    {% endif %}
+  </div>
+
+  <!-- VERIFY -->
+  <div id="tab-verify" class="tab-pane hidden">
+    {% if pending_verifications %}
+    <div class="space-y-4 mb-8">
+      <h3 class="font-black text-base text-yellow-400">⏳ Bekleyen Başvurular</h3>
+      {% for u in pending_verifications %}
+      <div class="bg-yellow-900/10 border border-yellow-500/20 rounded-2xl p-5 flex flex-col lg:flex-row items-start lg:items-center gap-4">
+        <a href="{{ url_for('profile', username=u.username) }}" class="flex items-center gap-3 min-w-0">
+          {% if u.avatar %}<img src="{{ u.avatar }}" class="w-14 h-14 rounded-full object-cover shrink-0 border-2 border-yellow-500/30">{% else %}<div class="w-14 h-14 bg-gradient-to-tr from-yellow-600 to-orange-600 rounded-full flex items-center justify-center font-black text-xl shrink-0">{{ u.username[0]|upper }}</div>{% endif %}
+          <div class="min-w-0"><p class="font-black text-lg">@{{ u.username }}</p><p class="text-xs text-gray-400 mt-0.5">{{ u.videos|length }} video · {{ u.followers_list.count() }} takipçi</p></div>
+        </a>
+        <form action="/admin/approve_verification/{{ u.id }}" method="POST" class="flex flex-wrap items-center gap-3 ml-auto">
+          <div class="grid grid-cols-5 gap-1.5">
+            {% for key, info in BADGES.items() %}
+            <label title="{{ info['label'] }}" class="cursor-pointer border border-white/10 hover:border-white/30 rounded-xl p-2 flex flex-col items-center gap-1 transition has-[:checked]:border-yellow-400 has-[:checked]:bg-yellow-500/10">
+              <input type="radio" name="badge" value="{{ key }}" class="hidden" {% if loop.first %}checked{% endif %}>
+              {{ info['svg']|safe }}
+              <span class="text-[8px] text-gray-400 text-center leading-tight">{{ info['label'][:8] }}</span>
+            </label>
+            {% endfor %}
+          </div>
+          <div class="flex gap-2">
+            <button type="submit" class="bg-green-600 hover:bg-green-500 text-white px-5 py-2.5 rounded-xl font-black text-sm transition">✓ Onayla</button>
+            <a href="/admin/reject_verification/{{ u.id }}" class="bg-gray-700 hover:bg-gray-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition">Reddet</a>
+          </div>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-12 text-gray-500 mb-8"><p class="text-4xl mb-3">🏅</p><p>Bekleyen rozet başvurusu yok.</p></div>
+    {% endif %}
+
+    {% if current_user.perm_verify_user %}
+    <div class="bg-white/4 border border-white/8 rounded-2xl p-5">
+      <h3 class="font-black text-base mb-4">🎯 Manuel Rozet Ver</h3>
+      <div class="flex gap-3 flex-wrap items-end">
+        <div class="flex-1 min-w-[180px]"><label class="text-xs text-gray-400 mb-1 block">Kullanıcı Adı</label><input type="text" id="manualBadgeUser" placeholder="@kullanıcıadı" class="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-yellow-500 transition"></div>
+        <div class="flex-1 min-w-[160px]"><label class="text-xs text-gray-400 mb-1 block">Rozet</label><select id="manualBadgeKey" class="w-full bg-black border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-yellow-500">{% for key, info in BADGES.items() %}<option value="{{ key }}">{{ info['label'] }}</option>{% endfor %}</select></div>
+        <button onclick="assignBadgeManual()" class="bg-yellow-500 hover:bg-yellow-400 text-black px-6 py-2.5 rounded-xl font-black text-sm transition">Ata</button>
+        <button onclick="removeBadgeManual()" class="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition">Kaldır</button>
+      </div>
+      <div id="manualBadgeMsg" class="mt-3 text-sm hidden"></div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ADMINS (super only) -->
+  {% if current_user.is_super_admin %}
+  <div id="tab-admins" class="tab-pane hidden">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div class="bg-white/4 border border-white/8 rounded-2xl p-5">
+        <h3 class="font-black text-base mb-4">🛡️ Mevcut Adminler</h3>
+        <div class="space-y-3">
+          {% for u in admins %}
+          <div class="bg-black/40 border border-white/8 rounded-2xl p-4">
+            <div class="flex items-center justify-between mb-3">
+              <a href="{{ url_for('profile', username=u.username) }}" class="flex items-center gap-2.5">
+                {% if u.avatar %}<img src="{{ u.avatar }}" class="w-10 h-10 rounded-full object-cover">{% else %}<div class="w-10 h-10 bg-gradient-to-tr from-blue-600 to-cyan-600 rounded-full flex items-center justify-center font-bold text-sm">{{ u.username[0]|upper }}</div>{% endif %}
+                <div><p class="font-bold">@{{ u.username }}</p>{% if u.is_super_admin %}<span class="text-[10px] text-purple-400 font-bold">Süper Admin</span>{% endif %}</div>
+              </a>
+              {% if u.username != 'tavugeymosu' %}
+              <a href="/admin/remove_admin/{{ u.id }}" onclick="return confirm('@{{ u.username }} admin yetkisi alınsın mı?')" class="text-xs text-red-400 hover:text-red-300 border border-red-500/20 px-3 py-1.5 rounded-xl hover:bg-red-500/10 transition font-bold">Yetkiyi Al</a>
+              {% else %}
+              <span class="text-[10px] text-gray-600 border border-white/5 px-3 py-1.5 rounded-xl">Korumalı</span>
+              {% endif %}
+            </div>
+            {% if u.username != 'tavugeymosu' %}
+            <div class="grid grid-cols-3 gap-2">
+              <label class="perm-toggle cursor-pointer">
+                <input type="checkbox" class="hidden perm-cb" id="ban-{{ u.id }}" {{ 'checked' if u.perm_ban_user }} onchange="updatePerm({{ u.id }}, 'ban', this.checked)">
+                <div id="lbl-ban-{{ u.id }}" class="perm-label border rounded-xl p-2.5 text-center transition {{ 'bg-red-600/20 border-red-500/40 text-red-300' if u.perm_ban_user else 'bg-white/5 border-white/10 text-gray-500' }}"><div class="text-lg mb-0.5">🚫</div><div class="text-[10px] font-bold">Kullanıcı Ban</div></div>
+              </label>
+              <label class="perm-toggle cursor-pointer">
+                <input type="checkbox" class="hidden perm-cb" id="del-{{ u.id }}" {{ 'checked' if u.perm_delete_video }} onchange="updatePerm({{ u.id }}, 'delete', this.checked)">
+                <div id="lbl-del-{{ u.id }}" class="perm-label border rounded-xl p-2.5 text-center transition {{ 'bg-orange-600/20 border-orange-500/40 text-orange-300' if u.perm_delete_video else 'bg-white/5 border-white/10 text-gray-500' }}"><div class="text-lg mb-0.5">🗑️</div><div class="text-[10px] font-bold">Video Sil</div></div>
+              </label>
+              <label class="perm-toggle cursor-pointer">
+                <input type="checkbox" class="hidden perm-cb" id="ver-{{ u.id }}" {{ 'checked' if u.perm_verify_user }} onchange="updatePerm({{ u.id }}, 'verify', this.checked)">
+                <div id="lbl-ver-{{ u.id }}" class="perm-label border rounded-xl p-2.5 text-center transition {{ 'bg-yellow-600/20 border-yellow-500/40 text-yellow-300' if u.perm_verify_user else 'bg-white/5 border-white/10 text-gray-500' }}"><div class="text-lg mb-0.5">🏅</div><div class="text-[10px] font-bold">Rozet Ver</div></div>
+              </label>
+            </div>
+            <p class="text-[10px] text-gray-600 mt-2 text-center">Değişiklikler anında kaydedilir</p>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="bg-white/4 border border-white/8 rounded-2xl p-5 h-fit">
+        <h3 class="font-black text-base mb-4">➕ Yeni Admin Ekle</h3>
+        <div class="space-y-4">
+          <div><label class="text-xs text-gray-400 mb-1 block">Kullanıcı Adı</label><input type="text" id="newAdminUser" placeholder="@kullanıcıadı" class="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 transition"></div>
+          <div>
+            <label class="text-xs text-gray-400 mb-2 block">Yetkiler</label>
+            <div class="grid grid-cols-3 gap-2">
+              <label class="cursor-pointer"><input type="checkbox" id="np-ban" class="hidden perm-cb"><div class="perm-label border border-white/10 bg-white/5 rounded-xl p-2.5 text-center transition"><div class="text-lg mb-0.5">🚫</div><div class="text-[10px] font-bold text-gray-400">Kullanıcı Ban</div></div></label>
+              <label class="cursor-pointer"><input type="checkbox" id="np-del" class="hidden perm-cb"><div class="perm-label border border-white/10 bg-white/5 rounded-xl p-2.5 text-center transition"><div class="text-lg mb-0.5">🗑️</div><div class="text-[10px] font-bold text-gray-400">Video Sil</div></div></label>
+              <label class="cursor-pointer"><input type="checkbox" id="np-ver" class="hidden perm-cb"><div class="perm-label border border-white/10 bg-white/5 rounded-xl p-2.5 text-center transition"><div class="text-lg mb-0.5">🏅</div><div class="text-[10px] font-bold text-gray-400">Rozet Ver</div></div></label>
+            </div>
+          </div>
+          <button onclick="addAdmin()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black transition shadow">Admin Ekle</button>
+          <div id="addAdminMsg" class="text-sm text-center hidden"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOGS -->
+  <div id="tab-logs" class="tab-pane hidden">
+    <div class="bg-white/4 border border-white/8 rounded-2xl p-5">
+      <h3 class="font-black text-base mb-4">📋 İşlem Kaydı</h3>
+      <div class="space-y-2">
+        {% for log in logs %}
+        <div class="flex items-start gap-3 bg-black/30 px-4 py-3 rounded-xl border border-white/5">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm
+            {% if log.action_type == 'ban' %}bg-red-500/20 border border-red-500/30
+            {% elif log.action_type == 'verify' %}bg-yellow-500/20 border border-yellow-500/30
+            {% elif log.action_type == 'delete_video' %}bg-orange-500/20 border border-orange-500/30
+            {% elif log.action_type == 'make_admin' %}bg-blue-500/20 border border-blue-500/30
+            {% else %}bg-white/5 border border-white/10{% endif %}">
+            {% if log.action_type == 'ban' %}🚫{% elif log.action_type == 'verify' %}🏅{% elif log.action_type == 'delete_video' %}🗑{% elif log.action_type == 'make_admin' %}⚙️{% else %}📝{% endif %}
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold"><span class="text-blue-400">@{{ log.admin.username }}</span><span class="text-gray-300"> → {{ log.description }}</span></p>
+            <p class="text-xs text-gray-500 mt-0.5">{{ log.timestamp.strftime('%d %B %Y, %H:%M:%S') }}</p>
+          </div>
+        </div>
+        {% else %}
+        <div class="text-center py-16 text-gray-500"><p class="text-4xl mb-3">📋</p><p>Henüz işlem kaydı yok.</p></div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+</div>
+
+<!-- BADGE MODAL -->
+<div id="badgeModal" class="fixed inset-0 bg-black/90 z-[200] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+  <div class="bg-[#111] border border-white/10 p-6 rounded-3xl w-full max-w-sm shadow-2xl">
+    <div class="flex justify-between items-center mb-5"><h3 class="text-xl font-black">Rozet Ver</h3><button onclick="closeBadgeModal()" class="w-8 h-8 hover:bg-white/10 rounded-xl flex items-center justify-center text-gray-400 hover:text-white transition">✕</button></div>
+    <p class="text-sm text-gray-400 mb-4">Hedef: <span id="badgeTargetName" class="font-bold text-white"></span></p>
+    <form id="badgeForm" method="POST">
+      <div class="grid grid-cols-5 gap-2 mb-5">
+        <label title="Kaldır" class="cursor-pointer border border-red-500/30 rounded-xl p-2 hover:bg-red-500/10 transition flex flex-col items-center gap-1"><input type="radio" name="badge" value="" class="hidden"><span class="text-red-400 text-lg font-black">✕</span><span class="text-[8px] text-gray-500">Kaldır</span></label>
+        {% for key, info in BADGES.items() %}
+        <label title="{{ info['label'] }}" class="cursor-pointer border border-white/10 rounded-xl p-2 hover:border-white/30 transition flex flex-col items-center gap-1 has-[:checked]:border-yellow-400 has-[:checked]:bg-yellow-500/10"><input type="radio" name="badge" value="{{ key }}" class="hidden">{{ info['svg']|safe }}<span class="text-[8px] text-gray-400 text-center">{{ info['label'][:8] }}</span></label>
+        {% endfor %}
+      </div>
+      <button type="submit" class="w-full py-3 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl font-black text-black hover:scale-[1.02] transition">Onayla</button>
+    </form>
+  </div>
+</div>
+
+<!-- PERM MODAL -->
+<div id="permModal" class="fixed inset-0 bg-black/90 z-[200] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+  <div class="bg-[#111] border border-white/10 p-6 rounded-3xl w-full max-w-sm shadow-2xl">
+    <div class="flex justify-between items-center mb-5"><h3 class="text-xl font-black">Yetki Düzenle</h3><button onclick="closePermModal()" class="w-8 h-8 hover:bg-white/10 rounded-xl flex items-center justify-center text-gray-400 hover:text-white transition">✕</button></div>
+    <p class="text-sm text-gray-400 mb-1">Kullanıcı: <span id="permTargetName" class="font-bold text-white"></span></p>
+    <p class="text-xs text-gray-600 mb-5">Değişiklikler anında kaydedilir.</p>
+    <div class="space-y-3 mb-4">
+      <label class="flex items-center justify-between bg-white/5 border border-white/8 p-4 rounded-2xl cursor-pointer hover:bg-white/8 transition">
+        <div class="flex items-center gap-3"><span class="text-2xl">🛡️</span><div><p class="font-bold text-sm">Admin Yetkisi</p><p class="text-xs text-gray-500">Panele erişim</p></div></div>
+        <div class="relative"><input type="checkbox" id="modal-is-admin" class="sr-only peer" onchange="savePermModal()"><div class="w-11 h-6 bg-gray-700 rounded-full peer-checked:bg-blue-600 transition after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-5 after:h-5 after:bg-white after:rounded-full after:transition peer-checked:after:left-5"></div></div>
+      </label>
+      <label class="flex items-center justify-between bg-white/5 border border-white/8 p-4 rounded-2xl cursor-pointer hover:bg-white/8 transition">
+        <div class="flex items-center gap-3"><span class="text-2xl">🚫</span><div><p class="font-bold text-sm">Kullanıcı Banlama</p><p class="text-xs text-gray-500">Üyeleri kaldırabilir</p></div></div>
+        <div class="relative"><input type="checkbox" id="modal-perm-ban" class="sr-only peer" onchange="savePermModal()"><div class="w-11 h-6 bg-gray-700 rounded-full peer-checked:bg-red-600 transition after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-5 after:h-5 after:bg-white after:rounded-full after:transition peer-checked:after:left-5"></div></div>
+      </label>
+      <label class="flex items-center justify-between bg-white/5 border border-white/8 p-4 rounded-2xl cursor-pointer hover:bg-white/8 transition">
+        <div class="flex items-center gap-3"><span class="text-2xl">🗑️</span><div><p class="font-bold text-sm">Video Silme</p><p class="text-xs text-gray-500">Videolara müdahale</p></div></div>
+        <div class="relative"><input type="checkbox" id="modal-perm-delete" class="sr-only peer" onchange="savePermModal()"><div class="w-11 h-6 bg-gray-700 rounded-full peer-checked:bg-orange-600 transition after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-5 after:h-5 after:bg-white after:rounded-full after:transition peer-checked:after:left-5"></div></div>
+      </label>
+      <label class="flex items-center justify-between bg-white/5 border border-white/8 p-4 rounded-2xl cursor-pointer hover:bg-white/8 transition">
+        <div class="flex items-center gap-3"><span class="text-2xl">🏅</span><div><p class="font-bold text-sm">Rozet Verme</p><p class="text-xs text-gray-500">Kullanıcıları doğrulama</p></div></div>
+        <div class="relative"><input type="checkbox" id="modal-perm-verify" class="sr-only peer" onchange="savePermModal()"><div class="w-11 h-6 bg-gray-700 rounded-full peer-checked:bg-yellow-600 transition after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-5 after:h-5 after:bg-white after:rounded-full after:transition peer-checked:after:left-5"></div></div>
+      </label>
+    </div>
+    <div id="permSaveMsg" class="text-xs text-center text-green-400 h-5"></div>
+  </div>
+</div>
+
+<style>
+.perm-cb:checked + .perm-label { border-color:rgba(255,255,255,.3)!important; background:rgba(255,255,255,.1)!important; color:white!important; }
+.tab-pane { animation: fadeUp .3s ease both; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+</style>
+
+<script>
+function switchTab(id) {
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.add('hidden'));
+  document.querySelectorAll('.tab-btn').forEach(b=>{b.classList.remove('bg-white','text-black');b.classList.add('text-gray-400');});
+  document.getElementById('tab-'+id)?.classList.remove('hidden');
+  const btn=document.getElementById('tab-btn-'+id);
+  if(btn){btn.classList.add('bg-white','text-black');btn.classList.remove('text-gray-400');}
+}
+function filterUsers(){
+  const q=document.getElementById('userSearch').value.toLowerCase();
+  const fil=document.getElementById('userFilter').value;
+  let vis=0;
+  document.querySelectorAll('.user-row').forEach(r=>{
+    const ok=(r.dataset.username||'').includes(q) && (fil==='all'||(fil==='admin'&&r.dataset.role==='admin')||(fil==='verified'&&r.dataset.verified==='verified')||(fil==='normal'&&r.dataset.role!=='admin'));
+    r.style.display=ok?'':'none'; if(ok)vis++;
+  });
+  document.getElementById('userCount').textContent=vis;
+}
+function filterVideos(){
+  const q=document.getElementById('videoSearch').value.toLowerCase();
+  const cat=document.getElementById('videoFilter').value;
+  document.querySelectorAll('.video-card').forEach(c=>{
+    const ok=((c.dataset.caption||'').includes(q)||(c.dataset.user||'').includes(q))&&(cat==='all'||c.dataset.cat===cat);
+    c.style.display=ok?'':'none';
+  });
+}
+function openBadgeModal(uid,uname){document.getElementById('badgeTargetName').textContent='@'+uname;document.getElementById('badgeForm').action='/admin/force_verify/'+uid;document.getElementById('badgeModal').classList.remove('hidden');}
+function closeBadgeModal(){document.getElementById('badgeModal').classList.add('hidden');}
+let _pid=null;
+function openPermModal(uid,uname,isAdmin,permBan,permDel,permVer){
+  _pid=uid;
+  document.getElementById('permTargetName').textContent='@'+uname;
+  document.getElementById('modal-is-admin').checked=isAdmin;
+  document.getElementById('modal-perm-ban').checked=permBan;
+  document.getElementById('modal-perm-delete').checked=permDel;
+  document.getElementById('modal-perm-verify').checked=permVer;
+  document.getElementById('permSaveMsg').textContent='';
+  document.getElementById('permModal').classList.remove('hidden');
+}
+function closePermModal(){document.getElementById('permModal').classList.add('hidden');}
+async function savePermModal(){
+  if(!_pid)return;
+  const r=await fetch('/admin/api/set_perms/'+_pid,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({is_admin:document.getElementById('modal-is-admin').checked,perm_ban:document.getElementById('modal-perm-ban').checked,perm_delete:document.getElementById('modal-perm-delete').checked,perm_verify:document.getElementById('modal-perm-verify').checked})});
+  const d=await r.json();
+  const msg=document.getElementById('permSaveMsg');
+  msg.textContent=d.message||d.error||'';
+  msg.className='text-xs text-center h-5 '+(d.error?'text-red-400':'text-green-400');
+}
+async function updatePerm(uid,type,val){
+  const r=await fetch('/admin/api/toggle_perm/'+uid,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,value:val})});
+  const d=await r.json();
+  if(d.error){alert(d.error);location.reload();return;}
+  const prefix=type==='ban'?'ban':type==='delete'?'del':'ver';
+  const lbl=document.getElementById('lbl-'+prefix+'-'+uid);
+  const colorMap={ban:'red-600/20 border-red-500/40 text-red-300',delete:'orange-600/20 border-orange-500/40 text-orange-300',verify:'yellow-600/20 border-yellow-500/40 text-yellow-300'};
+  if(lbl){lbl.className=val?`perm-label border rounded-xl p-2.5 text-center transition bg-${colorMap[type]}`:'perm-label border rounded-xl p-2.5 text-center transition bg-white/5 border-white/10 text-gray-500';}
+}
+async function addAdmin(){
+  const username=document.getElementById('newAdminUser').value.trim();
+  if(!username)return;
+  const r=await fetch('/admin/make_admin_by_name',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,perm_ban:document.getElementById('np-ban').checked,perm_delete:document.getElementById('np-del').checked,perm_verify:document.getElementById('np-ver').checked})});
+  const d=await r.json();
+  const msg=document.getElementById('addAdminMsg');
+  msg.classList.remove('hidden');msg.className='text-sm text-center '+(d.error?'text-red-400':'text-green-400');msg.textContent=d.message||d.error;
+  if(d.message)setTimeout(()=>location.reload(),1200);
+}
+async function assignBadgeManual(){
+  const username=document.getElementById('manualBadgeUser').value.trim().replace('@','');
+  const badge=document.getElementById('manualBadgeKey').value;
+  if(!username)return;
+  const r=await fetch('/admin/api/assign_badge',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,badge})});
+  const d=await r.json();showBadgeMsg(d.message||d.error,!!d.error);
+}
+async function removeBadgeManual(){
+  const username=document.getElementById('manualBadgeUser').value.trim().replace('@','');
+  if(!username)return;
+  const r=await fetch('/admin/api/assign_badge',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,badge:''})});
+  const d=await r.json();showBadgeMsg(d.message||d.error,!!d.error);
+}
+function showBadgeMsg(text,isError){const el=document.getElementById('manualBadgeMsg');el.classList.remove('hidden');el.className='mt-3 text-sm '+(isError?'text-red-400':'text-green-400');el.textContent=text;setTimeout(()=>el.classList.add('hidden'),3000);}
+</script>
+{% endblock %}

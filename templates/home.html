@@ -1,0 +1,93 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="h-full overflow-y-auto pb-20 w-full">
+
+  <!-- Top bar -->
+  <div class="flex justify-between items-center px-4 py-3 sticky top-0 bg-black/90 backdrop-blur-md z-30 border-b border-white/5">
+    <a href="/" class="flex items-center gap-2">
+      <div class="w-8 h-8 bg-gradient-to-tr from-red-600 to-purple-700 rounded-lg flex items-center justify-center font-black text-sm">V</div>
+      <span class="text-xl font-black tracking-tight">Vetrico</span>
+    </a>
+    <div class="flex items-center gap-3">
+      {% if current_user.is_authenticated %}
+      <a href="/notifications" class="relative p-1">
+        <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        {% if unread_notifications > 0 %}<span class="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-black"></span>{% endif %}
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Stories bar -->
+  <div class="px-4 py-3 border-b border-white/5">
+    <div class="flex gap-3 overflow-x-auto" style="-ms-overflow-style:none;scrollbar-width:none;">
+      {% if current_user.is_authenticated %}
+      <a href="/upload" class="flex flex-col items-center gap-1 shrink-0">
+        <div class="w-15 h-15 w-[60px] h-[60px] rounded-full border-2 border-dashed border-gray-600 flex items-center justify-center bg-black hover:border-red-500 transition">
+          <span class="text-xl text-gray-500">+</span>
+        </div>
+        <span class="text-[10px] text-gray-400 w-14 text-center truncate">Ekle</span>
+      </a>
+      {% endif %}
+      {% for story in stories %}
+      <a href="/watch/{{ story.id }}" class="flex flex-col items-center gap-1 shrink-0">
+        <div class="w-[60px] h-[60px] p-0.5 rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600">
+          <div class="w-full h-full rounded-full overflow-hidden border-2 border-black bg-gray-900">
+            {% if story.user.avatar %}
+              <img src="{{ story.user.avatar }}" class="w-full h-full object-cover">
+            {% else %}
+              <div class="w-full h-full flex items-center justify-center font-bold text-sm">{{ story.user.username[0]|upper }}</div>
+            {% endif %}
+          </div>
+        </div>
+        <span class="text-[10px] text-gray-300 w-14 text-center truncate">{{ story.user.username }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Category chips -->
+  <div class="px-4 py-2 flex gap-2 overflow-x-auto" style="-ms-overflow-style:none;scrollbar-width:none;">
+    {% set cats = ['Tümü', 'Eğlence', 'Oyun', 'Spor', 'Müzik', 'Teknoloji', 'Haber', 'Genel'] %}
+    {% for cat in cats %}
+    <a href="{{ '/' if cat=='Tümü' else ('/?category='+cat) }}"
+       class="shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold transition border
+       {{ 'bg-white text-black border-white' if (active_category == cat or (cat=='Tümü' and not active_category)) else 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10' }}">
+      {{ cat }}
+    </a>
+    {% endfor %}
+  </div>
+
+  <!-- Grid -->
+  <div class="px-3 mt-3">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+      {% for video in videos %}
+      <a href="/watch/{{ video.id }}" class="aspect-[9/16] bg-gray-900 rounded-2xl overflow-hidden relative group border border-white/5 hover:border-white/20 transition shadow-lg block">
+        <video src="{{ video.filename }}" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition duration-500 group-hover:scale-105"></video>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition"></div>
+        <div class="absolute bottom-0 left-0 right-0 p-2">
+          <div class="flex items-center gap-1">
+            {% if video.user.avatar %}
+              <img src="{{ video.user.avatar }}" class="w-5 h-5 rounded-full object-cover border border-white/30">
+            {% endif %}
+            <span class="text-[11px] font-bold text-white drop-shadow truncate">@{{ video.user.username }}</span>
+            {% if video.user.is_verified and video.user.badge_key and video.user.badge_key in BADGES %}
+              <span class="inline-flex shrink-0">{{ BADGES[video.user.badge_key]['svg']|safe }}</span>
+            {% endif %}
+          </div>
+          <div class="flex justify-between mt-1">
+            <span class="text-[10px] text-gray-300">♥ {{ video.liked_by|length }}</span>
+            <span class="text-[10px] text-gray-300">👁 {{ video.views }}</span>
+          </div>
+        </div>
+      </a>
+      {% else %}
+      <div class="col-span-full text-center py-20 text-gray-500">
+        <p class="text-4xl mb-4">🎬</p>
+        <p>Henüz video yok. <a href="/upload" class="text-red-500 font-bold">İlk videoyu yükle!</a></p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

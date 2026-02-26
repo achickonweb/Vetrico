@@ -1,0 +1,217 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="h-full overflow-y-auto pb-20 w-full">
+
+  <!-- Header gradient -->
+  <div class="pt-14 pb-8 px-4 md:px-8 bg-gradient-to-b from-gray-900/80 to-black">
+    <div class="max-w-3xl mx-auto flex flex-col md:flex-row items-center gap-6">
+
+      <!-- Avatar -->
+      <div class="relative group">
+        {% if current_user.is_authenticated and current_user.id == user.id %}
+        <label for="avatarInput" class="cursor-pointer">
+        {% endif %}
+          <div class="relative">
+            {% if user.avatar %}
+              <img src="{{ user.avatar }}" class="w-28 h-28 md:w-36 md:h-36 rounded-full object-cover border-4 border-black ring-2 ring-white/20">
+            {% else %}
+              <div class="w-28 h-28 md:w-36 md:h-36 bg-gradient-to-tr from-purple-600 to-pink-600 rounded-full flex items-center justify-center text-5xl font-black border-4 border-black">
+                {{ user.username[0]|upper }}
+              </div>
+            {% endif %}
+            {% if user.is_verified and user.badge_key and user.badge_key in BADGES %}
+              <div class="absolute -bottom-1 -right-1 bg-black rounded-full p-0.5 ring-2 ring-black"
+                   title="{{ BADGES[user.badge_key]['label'] }}">
+                {{ BADGES[user.badge_key]['svg']|safe }}
+              </div>
+            {% endif %}
+          </div>
+          {% if current_user.is_authenticated and current_user.id == user.id %}
+          <div class="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition backdrop-blur-sm">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </div>
+        </label>
+        <form id="avatarForm" action="/upload_avatar" method="POST" enctype="multipart/form-data" class="hidden">
+          <input type="file" name="avatar" id="avatarInput" accept="image/*" onchange="this.form.submit()">
+        </form>
+        {% endif %}
+      </div>
+
+      <!-- Info -->
+      <div class="flex-1 text-center md:text-left">
+        <div class="flex items-center justify-center md:justify-start gap-2 mb-1 flex-wrap">
+          <h1 class="text-3xl md:text-4xl font-black tracking-tight {{ 'text-sky-400' if user.is_verified else 'text-white' }}">
+            @{{ user.username }}
+          </h1>
+          {% if user.is_verified and user.badge_key and user.badge_key in BADGES %}
+            <span class="inline-flex" title="{{ BADGES[user.badge_key]['label'] }}">
+              {{ BADGES[user.badge_key]['svg']|safe }}
+            </span>
+            <span class="text-xs text-gray-400 font-medium">{{ BADGES[user.badge_key]['label'] }}</span>
+          {% endif %}
+          {% if user.is_super_admin %}<span class="text-xs bg-purple-600 px-2 py-0.5 rounded-full">Kurucu</span>{% elif user.is_admin %}<span class="text-xs bg-blue-600 px-2 py-0.5 rounded-full">Admin</span>{% endif %}
+        </div>
+        <p class="text-gray-400 mb-5 font-light">{{ user.bio }}</p>
+
+        <!-- Stats -->
+        <div class="flex justify-center md:justify-start gap-8 mb-5">
+          <div class="text-center"><div class="font-black text-2xl">{{ user.followers_list.count() }}</div><div class="text-xs text-gray-500 uppercase tracking-widest mt-0.5">Takipçi</div></div>
+          <div class="text-center"><div class="font-black text-2xl">{{ user.followed.count() }}</div><div class="text-xs text-gray-500 uppercase tracking-widest mt-0.5">Takip</div></div>
+          <div class="text-center"><div class="font-black text-2xl">{{ videos|length }}</div><div class="text-xs text-gray-500 uppercase tracking-widest mt-0.5">Video</div></div>
+        </div>
+
+        <!-- Admin panel for this user -->
+        {% if current_user.is_authenticated and current_user.is_admin and current_user.id != user.id %}
+        <div class="bg-white/5 border border-white/10 p-3 rounded-2xl mb-4 flex flex-wrap gap-2">
+          <span class="w-full text-[10px] text-gray-400 uppercase font-bold tracking-wider">Admin İşlemleri</span>
+          {% if current_user.perm_verify_user %}
+            <button onclick="document.getElementById('verifyModal').classList.remove('hidden')" class="bg-amber-500 text-black px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-amber-400 transition">🏅 Rozet Ver</button>
+          {% endif %}
+          {% if current_user.perm_ban_user and user.username != 'tavugeymosu' %}
+            <a href="/admin/delete_user/{{ user.id }}" onclick="return confirm('Kullanıcıyı ban\'lamak istiyor musun?')" class="bg-red-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-red-500 transition">🚫 Ban</a>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Action buttons -->
+        <div class="flex gap-2.5 justify-center md:justify-start flex-wrap">
+          {% if current_user.is_authenticated and current_user.id != user.id %}
+            <button id="profile-follow-btn" onclick="followFromProfile({{ user.id }})"
+              class="px-6 py-2.5 rounded-xl font-bold text-sm transition
+              {{ 'border border-white/20 text-white' if is_following else 'bg-red-600 text-white shadow-lg' }}">
+              {{ 'Takip Ediliyor' if is_following else 'Takip Et' }}
+            </button>
+            <a href="/messages/{{ user.id }}" class="bg-white/10 px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-white/20 transition">Mesaj</a>
+          {% endif %}
+          {% if current_user.is_authenticated and current_user.id == user.id %}
+            {% if user.is_admin %}<a href="/admin" class="bg-gradient-to-r from-blue-600 to-cyan-600 px-5 py-2.5 rounded-xl font-bold text-sm shadow hover:shadow-cyan-500/30 transition">🛡️ Admin</a>{% endif %}
+            {% if user.is_verified %}
+              <span class="border border-sky-500/50 text-sky-400 px-4 py-2.5 rounded-xl text-sm font-bold cursor-default">
+                {{ BADGES[user.badge_key]['label'] if user.badge_key and user.badge_key in BADGES else 'Doğrulanmış' }} ✓
+              </span>
+            {% elif user.verification_status == 'pending' %}
+              <span class="bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 px-4 py-2.5 rounded-xl text-sm font-bold cursor-default">İnceleniyor…</span>
+            {% else %}
+              <form action="/apply_verification" method="POST" class="inline">
+                <button class="bg-white/8 border border-white/15 px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-white/15 transition">✓ Rozet İste</button>
+              </form>
+            {% endif %}
+            <a href="/logout" class="border border-red-500/40 text-red-400 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-red-500/10 transition">Çıkış</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="max-w-5xl mx-auto px-4 mt-4">
+    <div class="flex border-b border-white/8 mb-5">
+      <button id="tab-videos" onclick="switchTab('videos')"
+        class="flex-1 py-3.5 font-bold text-sm transition border-b-2 border-white text-white">Videolar ({{ videos|length }})</button>
+      {% if current_user.is_authenticated and current_user.id == user.id %}
+      <button id="tab-saved" onclick="switchTab('saved')"
+        class="flex-1 py-3.5 font-bold text-sm transition border-b-2 border-transparent text-gray-500">🔖 Kaydedilenler</button>
+      {% endif %}
+    </div>
+
+    <!-- Videos grid -->
+    <div id="pane-videos" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+      {% for video in videos %}
+      <div class="relative group">
+        <a href="/watch/{{ video.id }}" class="aspect-[9/16] bg-gray-900 rounded-xl overflow-hidden relative block border border-white/5 hover:border-white/25 transition shadow-lg">
+          <video src="{{ video.filename }}" class="w-full h-full object-cover opacity-85 group-hover:opacity-100 transition duration-400"></video>
+          <div class="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition">
+            <span class="text-[11px] text-gray-300 line-clamp-1">{{ video.caption }}</span>
+          </div>
+        </a>
+        {% if current_user.is_authenticated and (current_user.id == user.id or current_user.is_admin) %}
+        <div class="absolute top-1.5 right-1.5 flex gap-1 opacity-0 group-hover:opacity-100 transition">
+          <a href="/edit/{{ video.id }}" class="w-7 h-7 bg-black/70 rounded-lg flex items-center justify-center text-xs hover:bg-blue-600 transition">✏️</a>
+          <form action="/delete_video/{{ video.id }}" method="POST" onsubmit="return confirm('Videoyu sil?')">
+            <button class="w-7 h-7 bg-black/70 rounded-lg flex items-center justify-center text-xs hover:bg-red-600 transition">🗑</button>
+          </form>
+        </div>
+        {% endif %}
+      </div>
+      {% else %}
+      <div class="col-span-full text-center py-16 text-gray-500">
+        <p class="text-3xl mb-3">🎬</p>
+        {% if current_user.is_authenticated and current_user.id == user.id %}
+        <a href="/upload" class="text-red-500 font-bold">İlk videounu yükle!</a>
+        {% else %}<p>Henüz video yok.</p>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Saved grid -->
+    {% if current_user.is_authenticated and current_user.id == user.id %}
+    <div id="pane-saved" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 hidden">
+      {% for video in bookmarked %}
+      <a href="/watch/{{ video.id }}" class="aspect-[9/16] bg-gray-900 rounded-xl overflow-hidden relative group border border-yellow-500/20 hover:border-yellow-400/50 transition shadow-lg block">
+        <video src="{{ video.filename }}" class="w-full h-full object-cover opacity-85 group-hover:opacity-100 transition"></video>
+        <div class="absolute top-2 right-2 text-lg drop-shadow">🔖</div>
+      </a>
+      {% else %}
+      <div class="col-span-full text-center py-16 text-gray-500">
+        <p class="text-3xl mb-3">🔖</p><p>Kaydettiğin video yok.</p>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Verify Modal (admin only) -->
+{% if current_user.is_authenticated and current_user.is_admin %}
+<div id="verifyModal" class="fixed inset-0 bg-black/90 z-[200] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+  <div class="bg-[#111] border border-white/10 p-6 rounded-3xl w-full max-w-sm relative shadow-2xl">
+    <button onclick="document.getElementById('verifyModal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10">✕</button>
+    <h3 class="text-xl font-black mb-5">Rozet Seç</h3>
+    <form action="/admin/force_verify/{{ user.id }}" method="POST">
+      <div class="grid grid-cols-4 gap-2 mb-5">
+        <label class="cursor-pointer border border-red-500/40 rounded-xl p-2.5 hover:bg-red-500/10 transition flex flex-col items-center gap-1" title="Rozeti Kaldır">
+          <input type="radio" name="badge" value="" class="hidden">
+          <span class="text-red-400 font-bold text-lg">✕</span>
+          <span class="text-[9px] text-gray-400 text-center">Kaldır</span>
+        </label>
+        {% for key, info in BADGES.items() %}
+        <label class="cursor-pointer border border-white/10 rounded-xl p-2.5 hover:bg-white/10 transition flex flex-col items-center gap-1" title="{{ info['label'] }}">
+          <input type="radio" name="badge" value="{{ key }}" class="hidden">
+          <div>{{ info['svg']|safe }}</div>
+          <span class="text-[9px] text-gray-400 text-center leading-tight">{{ info['label'] }}</span>
+        </label>
+        {% endfor %}
+      </div>
+      <button type="submit" class="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl font-bold text-black hover:scale-[1.02] transition">Onayla</button>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<script>
+function switchTab(tab) {
+  ['videos','saved'].forEach(t => {
+    document.getElementById(`pane-${t}`)?.classList.toggle('hidden', t !== tab);
+    const btn = document.getElementById(`tab-${t}`);
+    if (btn) {
+      btn.classList.toggle('border-white', t === tab);
+      btn.classList.toggle('text-white',  t === tab);
+      btn.classList.toggle('border-transparent', t !== tab);
+      btn.classList.toggle('text-gray-500', t !== tab);
+    }
+  });
+}
+async function followFromProfile(uid) {
+  const btn = document.getElementById('profile-follow-btn');
+  const r = await fetch(`/api/follow/${uid}`, {method:'POST'});
+  const d = await r.json();
+  if (d.action === 'followed') {
+    btn.textContent = 'Takip Ediliyor';
+    btn.className = 'px-6 py-2.5 rounded-xl font-bold text-sm transition border border-white/20 text-white';
+  } else {
+    btn.textContent = 'Takip Et';
+    btn.className = 'px-6 py-2.5 rounded-xl font-bold text-sm transition bg-red-600 text-white shadow-lg';
+  }
+}
+</script>
+{% endblock %}

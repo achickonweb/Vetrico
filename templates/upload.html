@@ -1,0 +1,65 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="h-full flex items-center justify-center p-4 pb-24 overflow-y-auto">
+  <form id="uploadForm" method="POST" enctype="multipart/form-data"
+        class="bg-white/4 border border-white/8 backdrop-blur-xl p-6 rounded-3xl w-full max-w-lg flex flex-col gap-4 shadow-2xl animate__animated animate__zoomIn">
+    <h2 class="text-2xl font-black text-center">Video Yükle 🚀</h2>
+
+    <!-- Drop zone -->
+    <div class="border-2 border-dashed border-gray-700 rounded-2xl relative bg-black/40 min-h-[360px] flex items-center justify-center overflow-hidden cursor-pointer hover:border-red-500 transition group">
+      <input type="file" name="file" id="videoFile" accept="video/*" required
+             class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-30"
+             onchange="previewVideo(this)">
+      <div id="uploadPlaceholder" class="flex flex-col items-center pointer-events-none gap-3">
+        <div class="w-20 h-20 bg-white/5 rounded-2xl flex items-center justify-center text-4xl group-hover:scale-110 transition">🎬</div>
+        <p class="text-gray-400 font-semibold">Video seç veya sürükle</p>
+        <p class="text-xs text-gray-600">MP4 · MOV · WEBM · Max 200MB</p>
+        <p class="text-xs text-gray-600">9:16 dikey format önerilir</p>
+      </div>
+      <video id="previewPlayer" class="hidden absolute inset-0 w-full h-full object-contain z-10" autoplay muted loop></video>
+    </div>
+
+    <select name="category" class="px-4 py-3.5 rounded-2xl bg-white/5 border border-white/10 outline-none text-gray-300 focus:border-red-500 transition">
+      <option value="Genel">📁 Kategori Seç</option>
+      <option value="Eğlence">😂 Eğlence</option>
+      <option value="Oyun">🎮 Oyun</option>
+      <option value="Spor">⚽ Spor</option>
+      <option value="Müzik">🎵 Müzik</option>
+      <option value="Teknoloji">💻 Teknoloji</option>
+      <option value="Haber">📰 Haber</option>
+    </select>
+
+    <textarea name="caption" placeholder="Video açıklaması... #hashtag kullanabilirsin" rows="3"
+              class="px-4 py-3.5 rounded-2xl bg-white/5 border border-white/10 outline-none resize-none text-white placeholder-gray-500 focus:border-red-500 transition"></textarea>
+
+    <button type="submit" id="submitBtn"
+            class="bg-gradient-to-r from-red-600 to-pink-600 py-4 rounded-2xl font-black text-lg shadow-lg hover:scale-[1.02] transition active:scale-[0.98]">
+      Paylaş 🔥
+    </button>
+  </form>
+</div>
+<script>
+function previewVideo(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const vid = document.getElementById('previewPlayer');
+  const ph  = document.getElementById('uploadPlaceholder');
+  vid.src = URL.createObjectURL(file);
+  vid.onloadedmetadata = () => {
+    const ratio = vid.videoWidth / vid.videoHeight;
+    if (ratio > 0.7) {
+      if (!confirm('Bu video dikey (9:16) formatında değil. Yine de yüklemek istiyor musun?')) {
+        input.value = ''; vid.src = ''; return;
+      }
+    }
+    ph.classList.add('hidden');
+    vid.classList.remove('hidden');
+  };
+}
+document.getElementById('uploadForm').addEventListener('submit', () => {
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Yükleniyor… ⏳';
+});
+</script>
+{% endblock %}

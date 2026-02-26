@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="h-full overflow-y-auto pb-24 w-full">
+  <div class="max-w-2xl mx-auto px-4 pt-6">
+    <h1 class="text-2xl font-black mb-6">Bildirimler</h1>
+    <div class="space-y-2">
+      {% for n in notifications %}
+      <div class="flex items-center gap-3 bg-white/{{ '8' if not n.is_read else '4' }} border border-white/8 p-4 rounded-2xl animate__animated animate__fadeIn transition">
+        <a href="{{ url_for('profile', username=n.sender.username) }}">
+          {% if n.sender.avatar %}
+            <img src="{{ n.sender.avatar }}" class="w-11 h-11 rounded-full object-cover shrink-0">
+          {% else %}
+            <div class="w-11 h-11 bg-gradient-to-tr from-purple-600 to-pink-600 rounded-full flex items-center justify-center font-bold shrink-0">{{ n.sender.username[0]|upper }}</div>
+          {% endif %}
+        </a>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm leading-snug">
+            <a href="{{ url_for('profile', username=n.sender.username) }}" class="font-bold hover:text-gray-300 transition">@{{ n.sender.username }}</a>
+            {% if n.type == 'like' %} <span class="text-gray-300">videonu beğendi</span> <span class="text-red-400">❤️</span>
+            {% elif n.type == 'follow' %} <span class="text-gray-300">seni takip etmeye başladı</span> <span class="text-blue-400">🚀</span>
+            {% elif n.type == 'comment' %} <span class="text-gray-300">videona yorum yaptı</span> <span class="text-yellow-400">💬</span>
+            {% elif n.type == 'system_approve' %} <span class="text-sky-400 font-semibold">Rozet başvurunuz onaylandı! 🏅</span>
+            {% endif %}
+          </p>
+          <p class="text-xs text-gray-500 mt-0.5">{{ n.timestamp.strftime('%d %b, %H:%M') }}</p>
+        </div>
+        {% if n.post_id %}
+        <a href="/watch/{{ n.post_id }}" class="w-12 h-16 bg-gray-900 rounded-xl overflow-hidden shrink-0 border border-white/10 flex items-center justify-center hover:border-white/30 transition">
+          <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </a>
+        {% endif %}
+      </div>
+      {% else %}
+      <div class="text-center py-20 text-gray-500">
+        <p class="text-4xl mb-4">🔔</p>
+        <p>Henüz bildirim yok.</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
